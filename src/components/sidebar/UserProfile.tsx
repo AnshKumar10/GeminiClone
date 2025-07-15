@@ -2,10 +2,10 @@ import { LogOut } from "lucide-react";
 import type { User } from "../../store/useStore";
 import { IconButton } from "../ButtonWithIcon";
 
-export const UserProfile: React.FC<{ user: User; onLogout: () => void }> = ({
-  user,
-  onLogout,
-}) => (
+export const UserProfile: React.FC<{
+  user: User | null;
+  onLogout: () => void;
+}> = ({ user, onLogout }) => (
   <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-[#2a2a2a] rounded-lg">
     <div className="flex items-center gap-3">
       <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center shadow">

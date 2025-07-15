@@ -71,28 +71,42 @@ This project is a frontend-only implementation of a conversational AI chat inter
 ```
 src/
 ├── components/
-│   ├── auth/
-│   │   └── AuthForm.tsx           # OTP login/signup form
-│   ├── chat/
-│   │   ├── ChatInterface.tsx      # Main chat container
-│   │   ├── Message.tsx           # Individual message component
-│   │   ├── TypingIndicator.tsx   # AI typing animation
-│   │   └── ChatInput.tsx         # Message input with image upload
-│   ├── main/
-│   │   ├── MainContent.tsx       # Main app content area
-│   │   └── WelcomeScreen.tsx     # Initial landing screen
-│   ├── sidebar/
-│   │   └── AppSidebar.tsx        # Chat list and navigation
-│   └── Layout.tsx                # App layout wrapper
+│ ├── Button.tsx # Reusable button component
+│ ├── ButtonWithIcon.tsx # Button with icon support
+│ ├── EmptyState.tsx # Component for empty state UI
+│ ├── Layout.tsx # App layout wrapper
+│ ├── auth/
+│ │ ├── AuthForm.tsx # OTP login/signup form
+│ │ ├── FormField.tsx # Generic form field wrapper
+│ │ ├── InputField.tsx # Input field component
+│ │ └── SelectField.tsx # Dropdown select field
+│ ├── chat/
+│ │ ├── ChatInput.tsx # Message input with image upload
+│ │ ├── ChatInterface.tsx # Main chat container
+│ │ ├── Message.tsx # Individual chat message
+│ │ └── TypingIndicator.tsx # Typing animation for AI
+│ ├── dashboard/
+│ │ ├── MainContent.tsx # Main app dashboard content
+│ │ └── WelcomeScreen.tsx # Initial welcome screen
+│ └── sidebar/
+│ ├── AppSidebar.tsx # Sidebar with navigation/chat list
+│ ├── Modal.tsx # Reusable modal component
+│ ├── SearchInput.tsx # Search bar for sidebar
+│ └── UserProfile.tsx # User profile dropdown/info
 ├── hooks/
-│   ├── useCountries.ts           # Country data fetching
-│   └── useDebounce.ts            # Debounced search input
-├── store/
-│   └── useStore.ts               # Zustand global state
+│ ├── use-mobile.tsx # Detect mobile screen sizes
+│ ├── useCountry.ts # Fetch and handle country data
+│ └── useDebounce.ts # Debounce hook for inputs
+├── lib/
+│ └── utils.ts # Utility/helper functions
 ├── pages/
-│   ├── Index.tsx                 # Main app page
-│   └── NotFound.tsx              # 404 error page
-└── main.tsx                      # App entry point
+│ ├── Index.tsx # Main app entry page
+│ └── NotFound.tsx # 404 error/fallback page
+├── store/
+│ └── useStore.ts # Zustand global state store
+├── styles/
+│ └── global.css # Global styles and resets
+└── main.tsx # Application entry point
 ```
 
 ## 🚀 Getting Started
