@@ -21,24 +21,17 @@ const ChatInterface: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  const lastRespondedMessageIdRef = useRef<string | null>(null);
-
   useEffect(() => {
     scrollToBottom();
 
     const messages = currentChatroom?.messages;
     if (!messages || messages.length === 0) return;
 
-    const lastMessage = messages[messages.length - 1];
-
-    if (
-      lastMessage.isUser &&
-      lastMessage.id !== lastRespondedMessageIdRef.current
-    ) {
-      lastRespondedMessageIdRef.current = lastMessage.id;
-      generateAIResponse(lastMessage.text);
+    if (messages.length === 1 && messages[0].isUser) {
+      generateAIResponse(messages[0].text);
     }
-  }, [currentChatroom?.messages, scrollToBottom]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentChatroom?.messages]);
 
   const generateAIResponse = useCallback(
     async (userMessage: string) => {

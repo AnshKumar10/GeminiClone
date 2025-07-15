@@ -74,7 +74,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled }) => {
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          rows={1}
+          rows={4}
           onKeyDown={handleKeyDown}
           placeholder="Write a message..."
           disabled={disabled}

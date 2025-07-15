@@ -130,7 +130,10 @@ const AuthenticationForm: React.FC = () => {
         />
 
         {!isOtpStage ? (
-          <form className="space-y-6 mt-6">
+          <form
+            className="space-y-6 mt-6"
+            onSubmit={phoneForm.handleSubmit(handleSendOtp)}
+          >
             {/* Country Selection */}
             <FormField
               label="Country"
@@ -141,7 +144,6 @@ const AuthenticationForm: React.FC = () => {
                 id="country"
                 register={phoneForm.register("countryCode")}
                 error={phoneForm.formState.errors.countryCode?.message}
-                className="bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm !text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select Country</option>
                 {countries.map((country) => (
@@ -168,25 +170,27 @@ const AuthenticationForm: React.FC = () => {
                 placeholder="Enter your phone number"
                 register={phoneForm.register("phone")}
                 error={phoneForm.formState.errors.phone?.message}
-                className="bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm !text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </FormField>
 
             {/* Send OTP Button */}
             <Button
-              type="button"
+              type="submit"
               variant="primary"
               size="lg"
               disabled={isLoading || countriesLoading}
               loading={isLoading}
               className="w-full mt-2"
-              onClick={phoneForm.handleSubmit(handleSendOtp)}
             >
               {isLoading ? "Sending OTP..." : "Send OTP"}
             </Button>
           </form>
         ) : (
-          <form className="space-y-6 mt-6">
+          <form
+            className="space-y-6 mt-6"
+            onSubmit={otpForm.handleSubmit(handleVerifyOtp)}
+          >
             {/* OTP Field */}
             <FormField
               label="Enter OTP"
@@ -198,7 +202,7 @@ const AuthenticationForm: React.FC = () => {
                 type="text"
                 placeholder="123456"
                 maxLength={6}
-                className="text-center text-xl tracking-[0.4em] font-mono bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-3 !text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="text-center text-xl tracking-[0.4em] font-mono bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 register={otpForm.register("otp")}
                 error={otpForm.formState.errors.otp?.message}
               />
@@ -213,13 +217,12 @@ const AuthenticationForm: React.FC = () => {
             {/* OTP Buttons */}
             <div className="space-y-3">
               <Button
-                type="button"
+                type="submit"
                 variant="primary"
                 size="lg"
                 disabled={isLoading}
                 loading={isLoading}
                 className="w-full"
-                onClick={otpForm.handleSubmit(handleVerifyOtp)}
               >
                 {isLoading ? "Verifying..." : "Verify OTP"}
               </Button>
