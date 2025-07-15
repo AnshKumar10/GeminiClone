@@ -4,7 +4,7 @@ A fully functional, responsive React-based chat application that simulates the G
 
 ## 🌟 Live Demo
 
-[Visit Live Application](https://deployment-url.com)
+[Visit Live Application](https://gemini-clone-one-sable.vercel.app/)
 
 ## 📋 Project Overview
 
