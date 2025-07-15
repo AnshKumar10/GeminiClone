@@ -41,7 +41,7 @@ const Message: React.FC<MessageProps> = ({ message }) => {
         )}
       </div>
 
-      {/* Message Content */}
+      {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center space-x-2 mb-2">
           <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -59,10 +59,11 @@ const Message: React.FC<MessageProps> = ({ message }) => {
           {message.image && (
             <img
               src={message.image}
-              alt="Uploaded content"
+              alt="User upload"
               className="max-w-sm h-auto rounded-lg mb-3 border border-gray-200 dark:border-gray-700"
             />
           )}
+
           <div className="prose prose-sm max-w-none">
             <p className="whitespace-pre-wrap break-words text-gray-900 dark:text-gray-100">
               {message.text}
@@ -71,7 +72,7 @@ const Message: React.FC<MessageProps> = ({ message }) => {
 
           {!message.isUser && (
             <button
-              className="absolute -right-2 top-0 w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full flex items-center justify-center focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="absolute -right-2 top-0 w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500"
               onClick={handleCopy}
               aria-label="Copy message"
             >

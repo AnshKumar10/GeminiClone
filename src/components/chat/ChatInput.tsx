@@ -1,114 +1,94 @@
 import React, { useState, useRef } from "react";
 import { Send, Image as ImageIcon } from "lucide-react";
-import { toast } from "sonner";
 
 interface ChatInputProps {
-  onSendMessage: (message: string, image?: string) => void;
+  onSendMessage: (text: string, image?: string) => void;
   disabled?: boolean;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled }) => {
   const [message, setMessage] = useState("");
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSendMessage = () => {
-    if ((!message.trim() && !selectedImage) || disabled) return;
+  const handleSend = () => {
+    if (!message.trim() && !imagePreview) return;
 
-    const messageText = message.trim() || "Image shared";
-    onSendMessage(messageText, selectedImage || undefined);
-
+    onSendMessage(message.trim(), imagePreview || undefined);
     setMessage("");
-    setSelectedImage(null);
+    setImagePreview(null);
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Please select an image smaller than 5MB.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setSelectedImage(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      handleSend();
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
     }
   };
 
   return (
-    <div className="border-t w-full border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
-      <div className="max-w-4xl mx-auto">
-        {selectedImage && (
-          <div className="mb-4 relative inline-block">
-            <img
-              src={selectedImage}
-              alt="Selected"
-              className="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
-            />
-            <button
-              className="absolute -top-2 -right-2 w-6 h-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:bg-red-50 dark:hover:bg-red-900 hover:text-red-600 dark:hover:text-red-400 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
-              onClick={() => setSelectedImage(null)}
-              aria-label="Remove image"
-            >
-              ×
-            </button>
-          </div>
-        )}
-
-        <div className="flex items-end space-x-3">
-          <div className="flex-1">
-            <div className="flex items-center space-x-2 p-4 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800">
-              <input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Ask Gemini"
-                className="flex-1 border-0 bg-transparent focus:ring-0 focus:outline-none text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                onKeyDown={handleKeyDown}
-                disabled={disabled}
-                aria-label="Message input"
-              />
-
-              <div className="flex items-center space-x-1">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  aria-label="Upload image"
-                >
-                  <ImageIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                </button>
-                {(message.trim() || selectedImage) && (
-                  <button
-                    onClick={handleSendMessage}
-                    disabled={disabled}
-                    className="p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    aria-label="Send message"
-                  >
-                    <Send className="w-4 h-4 text-white" />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+    <div className="border-t border-gray-200 dark:border-gray-800 px-6 py-4 bg-white dark:bg-[#1e1e1e]">
+      {imagePreview && (
+        <div className="mb-2 relative">
+          <img
+            src={imagePreview}
+            alt="Preview"
+            className="max-w-xs rounded-lg border border-gray-300 dark:border-gray-700"
+          />
+          <button
+            onClick={() => setImagePreview(null)}
+            className="absolute top-1 right-1 text-xs text-white bg-red-500 hover:bg-red-600 px-1 rounded"
+          >
+            ✕
+          </button>
         </div>
+      )}
+
+      <div className="flex items-end space-x-3">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-300"
+          title="Upload image"
+        >
+          <ImageIcon className="w-5 h-5" />
+        </button>
 
         <input
-          ref={fileInputRef}
           type="file"
           accept="image/*"
-          onChange={handleImageUpload}
+          ref={fileInputRef}
           className="hidden"
-          aria-hidden="true"
+          onChange={handleImageUpload}
         />
+
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          rows={1}
+          onKeyDown={handleKeyDown}
+          placeholder="Write a message..."
+          disabled={disabled}
+          className="flex-1 resize-none border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+
+        <button
+          onClick={handleSend}
+          disabled={disabled}
+          className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50"
+          aria-label="Send"
+        >
+          <Send className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from "react";
+import React, { useRef, useEffect, useCallback, useState } from "react";
 import { Sparkles } from "lucide-react";
 import Message from "./Message";
 import TypingIndicator from "./TypingIndicator";
@@ -9,7 +9,7 @@ const ChatInterface: React.FC = () => {
   const { chatrooms, currentChatroomId, addMessage, isTyping, setTyping } =
     useStore();
 
-  const [lastResponseTime, setLastResponseTime] = React.useState(0);
+  const [lastResponseTime, setLastResponseTime] = useState(0);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -21,9 +21,24 @@ const ChatInterface: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
+  const lastRespondedMessageIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     scrollToBottom();
-  }, [currentChatroom?.messages, isTyping, scrollToBottom]);
+
+    const messages = currentChatroom?.messages;
+    if (!messages || messages.length === 0) return;
+
+    const lastMessage = messages[messages.length - 1];
+
+    if (
+      lastMessage.isUser &&
+      lastMessage.id !== lastRespondedMessageIdRef.current
+    ) {
+      lastRespondedMessageIdRef.current = lastMessage.id;
+      generateAIResponse(lastMessage.text);
+    }
+  }, [currentChatroom?.messages, scrollToBottom]);
 
   const generateAIResponse = useCallback(
     async (userMessage: string) => {
@@ -32,33 +47,30 @@ const ChatInterface: React.FC = () => {
       const now = Date.now();
       const timeSinceLastResponse = now - lastResponseTime;
       const minDelay = 2000;
-
-      const additionalDelay = Math.max(0, minDelay - timeSinceLastResponse);
-      const responseDelay = 1500 + additionalDelay + Math.random() * 2000;
+      const responseDelay =
+        1500 +
+        Math.max(0, minDelay - timeSinceLastResponse) +
+        Math.random() * 2000;
 
       setTyping(true);
-
-      await new Promise((resolve) => setTimeout(resolve, responseDelay));
+      await new Promise((res) => setTimeout(res, responseDelay));
 
       let aiResponse =
         "I understand your message. How can I assist you further?";
 
-      const lowerMessage = userMessage.toLowerCase();
-      if (lowerMessage.includes("hello") || lowerMessage.includes("hi")) {
+      const lower = userMessage.toLowerCase();
+      if (lower.includes("hello") || lower.includes("hi")) {
         aiResponse =
           "Hello! I'm Gemini, your AI assistant. How can I help you today?";
-      } else if (lowerMessage.includes("weather")) {
+      } else if (lower.includes("weather")) {
         aiResponse =
-          "I'd be happy to help with weather information, though I don't have access to real-time data in this demo. Is there anything else I can assist you with?";
-      } else if (lowerMessage.includes("help")) {
+          "I can tell you about the weather in general, but I don't have real-time data in this demo.";
+      } else if (lower.includes("help")) {
         aiResponse =
-          "I'm here to help! You can ask me questions, have conversations, or even share images. What would you like to know?";
-      } else if (
-        lowerMessage.includes("image") ||
-        lowerMessage.includes("picture")
-      ) {
+          "I'm here to help! You can ask questions, chat casually, or share images.";
+      } else if (lower.includes("image") || lower.includes("picture")) {
         aiResponse =
-          "I can see you've shared an image! While I can view images in this demo, I'd need more advanced capabilities to analyze them in detail.";
+          "Thanks for the image! I can view it, but can't fully analyze it in this demo.";
       }
 
       addMessage(currentChatroomId, {
@@ -70,7 +82,7 @@ const ChatInterface: React.FC = () => {
       setTyping(false);
       setLastResponseTime(Date.now());
     },
-    [currentChatroomId, addMessage, setTyping, lastResponseTime]
+    [currentChatroomId, lastResponseTime, addMessage, setTyping]
   );
 
   const handleSendMessage = async (messageText: string, image?: string) => {
@@ -89,15 +101,15 @@ const ChatInterface: React.FC = () => {
   if (!currentChatroom) return null;
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-gray-900">
-      {/* Chat Header */}
-      <div className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4">
+    <div className="flex flex-col h-screen bg-white dark:bg-[#1e1e1e]">
+      {/* ───────────── Chat Header ───────────── */}
+      <div className="border-b border-gray-200 dark:border-gray-800 px-6 py-4">
         <h1 className="font-medium text-lg truncate text-gray-900 dark:text-gray-100">
           {currentChatroom.title}
         </h1>
       </div>
 
-      {/* Messages */}
+      {/* ───────────── Chat Messages ───────────── */}
       <div className="flex-1 overflow-y-auto" ref={scrollAreaRef}>
         <div className="px-6 py-6 max-w-4xl mx-auto w-full">
           {currentChatroom.messages.length === 0 ? (
@@ -105,7 +117,7 @@ const ChatInterface: React.FC = () => {
               <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-gray-100">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                 Ready to chat
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
@@ -124,7 +136,7 @@ const ChatInterface: React.FC = () => {
         </div>
       </div>
 
-      {/* Input Area */}
+      {/* ───────────── Chat Input ───────────── */}
       <ChatInput onSendMessage={handleSendMessage} disabled={isTyping} />
     </div>
   );

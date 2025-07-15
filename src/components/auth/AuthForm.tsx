@@ -5,6 +5,10 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useCountries } from "../../hooks/useCountry";
 import { useStore } from "../../store/useStore";
+import { FormField } from "./FormField";
+import { SelectField } from "./SelectField";
+import { InputField } from "./InputField";
+import { Button } from "../Button";
 
 const phoneSchema = z.object({
   countryCode: z.string().min(1, "Please select a country"),
@@ -15,8 +19,6 @@ const phoneSchema = z.object({
     .regex(/^\d+$/, "Phone number must contain only digits"),
 });
 
-type PhoneFormData = z.infer<typeof phoneSchema>;
-
 const otpSchema = z.object({
   otp: z
     .string()
@@ -24,10 +26,25 @@ const otpSchema = z.object({
     .regex(/^\d+$/, "OTP must contain only digits"),
 });
 
+type PhoneFormData = z.infer<typeof phoneSchema>;
 type OtpFormData = z.infer<typeof otpSchema>;
 
-const AuthForm: React.FC = () => {
-  const [otpSent, setOtpSent] = useState(false);
+interface FormHeaderProps {
+  title: string;
+  subtitle: string;
+}
+
+const FormHeader: React.FC<FormHeaderProps> = ({ title, subtitle }) => (
+  <div className="text-center space-y-2 mb-6">
+    <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+      {title}
+    </h1>
+    <p className="text-base text-slate-600 dark:text-slate-400">{subtitle}</p>
+  </div>
+);
+
+const AuthenticationForm: React.FC = () => {
+  const [isOtpStage, setIsOtpStage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { setUser } = useStore();
   const { countries, isLoading: countriesLoading } = useCountries();
@@ -38,216 +55,191 @@ const AuthForm: React.FC = () => {
 
   const phoneForm = useForm<PhoneFormData>({
     resolver: zodResolver(phoneSchema),
-    defaultValues: {
-      countryCode: "",
-      phone: "",
-    },
+    defaultValues: { countryCode: "", phone: "" },
   });
 
   const otpForm = useForm<OtpFormData>({
     resolver: zodResolver(otpSchema),
-    defaultValues: {
-      otp: "",
-    },
+    defaultValues: { otp: "" },
   });
 
   useEffect(() => {
-    setPhoneData(phoneForm.getValues());
+    if (phoneForm.formState.isSubmitSuccessful) {
+      setPhoneData(phoneForm.getValues());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phoneForm.formState.isSubmitSuccessful]);
 
-  const sendOtp = async () => {
+  const handleSendOtp = async () => {
     setIsLoading(true);
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    setOtpSent(true);
-    setIsLoading(false);
-    toast.success("OTP sent successfully!");
-  };
-
-  const verifyOtp = async (data: OtpFormData) => {
-    setIsLoading(true);
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // Simple OTP validation (in real app, this would be server-side)
-    if (data.otp === "123456") {
-      const userData = {
-        id: Date.now().toString(),
-        phone: `${phoneData.countryCode}${phoneData.phone}`,
-        countryCode: phoneData.countryCode,
-      };
-
-      setUser(userData);
-      toast.success("Login successful!");
-    } else {
-      toast.error("Invalid OTP. Please try again.");
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setIsOtpStage(true);
+      toast.success("OTP sent successfully!");
+    } catch {
+      toast.error("Failed to send OTP. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
-  const resendOtp = async () => {
+  const handleVerifyOtp = async (data: OtpFormData) => {
     setIsLoading(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      if (data.otp === "123456") {
+        const userData = {
+          id: Date.now().toString(),
+          phone: `${phoneData.countryCode}${phoneData.phone}`,
+          countryCode: phoneData.countryCode,
+        };
+        setUser(userData);
+        toast.success("Login successful!");
+      } else {
+        toast.error("Invalid OTP. Please try again.");
+      }
+    } catch {
+      toast.error("Verification failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    setIsLoading(false);
-    toast.success("OTP resent successfully!");
+  const handleResendOtp = async () => {
+    setIsLoading(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      toast.success("OTP resent successfully!");
+    } catch {
+      toast.error("Failed to resend OTP. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-          Welcome to Gemini Chat
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          {otpSent
-            ? "Enter the OTP sent to your phone"
-            : "Enter your phone number to get started"}
-        </p>
-      </div>
+    <div className="w-full max-w-md mx-auto px-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 md:p-8 transition-colors">
+        <FormHeader
+          title="Welcome to Gemini Chat"
+          subtitle={
+            isOtpStage
+              ? "Enter the OTP sent to your phone"
+              : "Enter your phone number to get started"
+          }
+        />
 
-      {!otpSent ? (
-        <form onSubmit={phoneForm.handleSubmit(sendOtp)} className="space-y-4">
-          <div>
-            <label
-              htmlFor="country"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-            >
-              Country
-            </label>
-            <select
+        {!isOtpStage ? (
+          <form className="space-y-6 mt-6">
+            {/* Country Selection */}
+            <FormField
+              label="Country"
               id="country"
-              {...phoneForm.register("countryCode")}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              aria-describedby="country-error"
+              error={phoneForm.formState.errors.countryCode?.message}
             >
-              <option value="">Select Country</option>
-              {countries.map((country) => (
-                <option
-                  key={country.cca2}
-                  value={country.idd.root + (country.idd.suffixes?.[0] || "")}
-                >
-                  {country.flag} {country.name.common} ({country.idd.root}
-                  {country.idd.suffixes?.[0] || ""})
-                </option>
-              ))}
-            </select>
-            {phoneForm.formState.errors.countryCode && (
-              <p
-                id="country-error"
-                className="mt-1 text-sm text-red-600 dark:text-red-400"
-                role="alert"
+              <SelectField
+                id="country"
+                register={phoneForm.register("countryCode")}
+                error={phoneForm.formState.errors.countryCode?.message}
+                className="bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm !text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {phoneForm.formState.errors.countryCode.message}
-              </p>
-            )}
-          </div>
+                <option value="">Select Country</option>
+                {countries.map((country) => (
+                  <option
+                    key={country.cca2}
+                    value={country.idd.root + (country.idd.suffixes?.[0] || "")}
+                  >
+                    {country.flag} {country.name.common} ({country.idd.root}
+                    {country.idd.suffixes?.[0] || ""})
+                  </option>
+                ))}
+              </SelectField>
+            </FormField>
 
-          <div>
-            <label
-              htmlFor="phone"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-            >
-              Phone Number
-            </label>
-            <input
+            {/* Phone Input */}
+            <FormField
+              label="Phone Number"
               id="phone"
-              type="tel"
-              {...phoneForm.register("phone")}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              placeholder="Enter your phone number"
-              aria-describedby="phone-error"
-            />
-            {phoneForm.formState.errors.phone && (
-              <p
-                id="phone-error"
-                className="mt-1 text-sm text-red-600 dark:text-red-400"
-                role="alert"
-              >
-                {phoneForm.formState.errors.phone.message}
-              </p>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading || countriesLoading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoading ? "Sending OTP..." : "Send OTP"}
-          </button>
-        </form>
-      ) : (
-        <form onSubmit={otpForm.handleSubmit(verifyOtp)} className="space-y-4">
-          <div>
-            <label
-              htmlFor="otp"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              error={phoneForm.formState.errors.phone?.message}
             >
-              Enter OTP
-            </label>
-            <input
+              <InputField
+                id="phone"
+                type="tel"
+                placeholder="Enter your phone number"
+                register={phoneForm.register("phone")}
+                error={phoneForm.formState.errors.phone?.message}
+                className="bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm !text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </FormField>
+
+            {/* Send OTP Button */}
+            <Button
+              type="button"
+              variant="primary"
+              size="lg"
+              disabled={isLoading || countriesLoading}
+              loading={isLoading}
+              className="w-full mt-2"
+              onClick={phoneForm.handleSubmit(handleSendOtp)}
+            >
+              {isLoading ? "Sending OTP..." : "Send OTP"}
+            </Button>
+          </form>
+        ) : (
+          <form className="space-y-6 mt-6">
+            {/* OTP Field */}
+            <FormField
+              label="Enter OTP"
               id="otp"
-              type="text"
-              {...otpForm.register("otp")}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-center text-lg tracking-widest"
-              placeholder="123456"
-              maxLength={6}
-              aria-describedby="otp-error otp-hint"
-            />
-            <p
-              id="otp-hint"
-              className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+              error={otpForm.formState.errors.otp?.message}
             >
-              For demo purposes, use: 123456
-            </p>
-            {otpForm.formState.errors.otp && (
-              <p
-                id="otp-error"
-                className="mt-1 text-sm text-red-600 dark:text-red-400"
-                role="alert"
-              >
-                {otpForm.formState.errors.otp.message}
+              <InputField
+                id="otp"
+                type="text"
+                placeholder="123456"
+                maxLength={6}
+                className="text-center text-xl tracking-[0.4em] font-mono bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-3 !text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                register={otpForm.register("otp")}
+                error={otpForm.formState.errors.otp?.message}
+              />
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center">
+                For demo purposes, use:{" "}
+                <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
+                  123456
+                </span>
               </p>
-            )}
-          </div>
+            </FormField>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoading ? "Verifying..." : "Verify OTP"}
-          </button>
+            {/* OTP Buttons */}
+            <div className="space-y-3">
+              <Button
+                type="button"
+                variant="primary"
+                size="lg"
+                disabled={isLoading}
+                loading={isLoading}
+                className="w-full"
+                onClick={otpForm.handleSubmit(handleVerifyOtp)}
+              >
+                {isLoading ? "Verifying..." : "Verify OTP"}
+              </Button>
 
-          <button
-            type="button"
-            onClick={resendOtp}
-            disabled={isLoading}
-            className="w-full flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Resend OTP
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setOtpSent(false);
-              otpForm.reset();
-            }}
-            className="w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 focus:outline-none focus:underline"
-          >
-            Change phone number
-          </button>
-        </form>
-      )}
+              <Button
+                type="button"
+                variant="secondary"
+                size="lg"
+                disabled={isLoading}
+                onClick={handleResendOtp}
+                className="w-full"
+              >
+                Resend OTP
+              </Button>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
 };
 
-export default AuthForm;
+export default AuthenticationForm;

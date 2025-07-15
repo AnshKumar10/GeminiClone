@@ -1,22 +1,23 @@
 import React from "react";
 import { useStore } from "../../store/useStore";
-import WelcomeScreen from "./WelcomeScreen";
 import { Moon, Sun } from "lucide-react";
 import ChatInterface from "../chat/ChatInterface";
+import WelcomeScreen from "./WelcomeScreen";
 
 const MainContent: React.FC = () => {
   const { currentChatroomId, isDarkMode, toggleDarkMode } = useStore();
 
   return (
-    <main className="flex-1 flex flex-col bg-white dark:bg-gray-900 relative">
+    <main className="flex flex-col h-screen w-full dark:bg-[#1e1e1e] text-white relative">
+      {/* Dark Mode Toggle */}
       <button
         onClick={toggleDarkMode}
-        className="absolute top-4 right-4 z-10 p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+        className="absolute top-4 right-4 z-10 p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors"
       >
         {isDarkMode ? (
-          <Sun className="w-5 h-5 text-yellow-500" />
+          <Sun className="w-5 h-5 text-yellow-400" />
         ) : (
-          <Moon className="w-5 h-5 text-gray-600" />
+          <Moon className="w-5 h-5 text-white" />
         )}
       </button>
 

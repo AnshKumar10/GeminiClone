@@ -1,18 +1,62 @@
 import React, { useState } from "react";
-import { toast } from "sonner";
-import {
-  Plus,
-  Search,
-  MessageSquare,
-  Trash2,
-  LogOut,
-  Menu,
-  X,
-} from "lucide-react";
+import { Plus, Trash2, Menu, X } from "lucide-react";
+import { IconButton } from "../ButtonWithIcon";
 import { useStore } from "../../store/useStore";
 import { useDebounce } from "../../hooks/useDebounce";
+import { toast } from "sonner";
+import { Button } from "../Button";
+import { SearchInput } from "./SearchInput";
+import { EmptyState } from "../EmptyState";
+import { UserProfile } from "../UserProfile";
+import { Modal } from "../Modal";
 
-const AppSidebar: React.FC = () => {
+interface ChatroomItemProps {
+  chatroom: {
+    id: string;
+    title: string;
+    messages: unknown[];
+  };
+  isActive: boolean;
+  onSelect: () => void;
+  onDelete: () => void;
+}
+
+const ChatroomItem: React.FC<ChatroomItemProps> = ({
+  chatroom,
+  isActive,
+  onSelect,
+  onDelete,
+}) => (
+  <div className="relative group">
+    <div
+      onClick={onSelect}
+      className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+        ${
+          isActive
+            ? "bg-gray-200 dark:bg-[#2e2e2e] text-gray-900 dark:text-white"
+            : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+        }
+        focus:outline-none focus:ring-2 focus:ring-blue-500`}
+      aria-label={`Open chat: ${chatroom.title}`}
+    >
+      <span className="truncate">{chatroom.title}</span>
+
+      {/* Delete Icon - show only on hover or focus */}
+      <span className="ml-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+        <IconButton
+          icon={Trash2}
+          onClick={onDelete}
+          variant="ghost"
+          size="sm"
+          ariaLabel={`Delete chat: ${chatroom.title}`}
+          className="text-gray-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-600 dark:text-gray-500"
+        />
+      </span>
+    </div>
+  </div>
+);
+
+const NavigationSidebar: React.FC = () => {
   const {
     user,
     chatrooms,
@@ -20,10 +64,9 @@ const AppSidebar: React.FC = () => {
     deleteChatroom,
     setCurrentChatroom,
     logout,
-    searchQuery,
-    setSearchQuery,
     currentChatroomId,
   } = useStore();
+
   const [newChatroomTitle, setNewChatroomTitle] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{
@@ -31,8 +74,9 @@ const AppSidebar: React.FC = () => {
     title: string;
   } | null>(null);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [localSearchQuery, setLocalSearchQuery] = useState("");
 
-  const debouncedSearch = useDebounce(searchQuery, 300);
+  const debouncedSearch = useDebounce(localSearchQuery, 300);
 
   const filteredChatrooms = chatrooms.filter((chatroom) =>
     chatroom.title.toLowerCase().includes(debouncedSearch.toLowerCase())
@@ -67,220 +111,159 @@ const AppSidebar: React.FC = () => {
     toast.success("Logged out successfully");
   };
 
+  const closeMobileSidebar = () => setIsMobileOpen(false);
+
   return (
     <>
-      {/* Mobile overlay */}
+      {/* ────── Mobile Overlay ────── */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setIsMobileOpen(false)}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          onClick={closeMobileSidebar}
           aria-hidden="true"
         />
       )}
 
-      {/* Sidebar */}
+      {/* ────── Sidebar ────── */}
       <div
-        className={`fixed left-0 top-0 z-50 h-full w-80 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 lg:relative lg:transform-none ${
+        className={`fixed left-0 top-0 z-50 h-full w-80 bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-white border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ease-in-out lg:relative lg:transform-none ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-            Gemini Chat
-          </h2>
-          <button
-            onClick={() => setIsMobileOpen(false)}
-            className="lg:hidden p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            aria-label="Close sidebar"
-          >
-            <X className="w-5 h-5" />
-          </button>
+        {/* ────── Header ────── */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+          <h2 className="text-xl font-semibold tracking-tight">Gemini</h2>
+          <IconButton
+            icon={X}
+            onClick={closeMobileSidebar}
+            size="sm"
+            ariaLabel="Close sidebar"
+            className="lg:hidden text-gray-700 dark:text-white"
+          />
         </div>
 
-        {/* Create New Chat */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-          <button
+        {/* ────── Search ────── */}
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+          <SearchInput
+            value={localSearchQuery}
+            onChange={setLocalSearchQuery}
+            placeholder="Search chats..."
+            className="bg-gray-100 dark:bg-[#2a2a2a] text-gray-900 dark:text-white placeholder-gray-400"
+          />
+        </div>
+
+        {/* ────── CTA: New Chat ────── */}
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+          <Button
+            variant="ghost"
             onClick={() => setShowCreateModal(true)}
-            className="w-full flex items-center space-x-3 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            aria-label="Create new chatroom"
+            className="w-full justify-start space-x-3 text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             <span>New Chat</span>
-          </button>
+          </Button>
         </div>
 
-        {/* Search */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search chats..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-gray-100"
-              aria-label="Search chatrooms"
-            />
-          </div>
-        </div>
-
-        {/* Chat List */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-2">
+        {/* ────── Chat List ────── */}
+        <div className="flex-1 overflow-y-auto px-4 py-2">
+          <div className="space-y-1">
             {filteredChatrooms.length === 0 ? (
-              <div className="text-center py-8">
-                <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400">
-                  {searchQuery ? "No chats found" : "No chats yet"}
-                </p>
-              </div>
+              <EmptyState searchQuery={localSearchQuery} />
             ) : (
               filteredChatrooms.map((chatroom) => (
-                <div key={chatroom.id} className="group relative">
-                  <button
-                    onClick={() => {
-                      setCurrentChatroom(chatroom.id);
-                      setIsMobileOpen(false);
-                    }}
-                    className={`w-full text-left p-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      currentChatroomId === chatroom.id
-                        ? "bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100"
-                        : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    }`}
-                    aria-label={`Open chat: ${chatroom.title}`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <MessageSquare className="w-5 h-5 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{chatroom.title}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                          {chatroom.messages.length} messages
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() =>
-                      handleDeleteChatroom(chatroom.id, chatroom.title)
-                    }
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-400 rounded transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:opacity-100"
-                    aria-label={`Delete chat: ${chatroom.title}`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                <ChatroomItem
+                  key={chatroom.id}
+                  chatroom={chatroom}
+                  isActive={currentChatroomId === chatroom.id}
+                  onSelect={() => {
+                    setCurrentChatroom(chatroom.id);
+                    closeMobileSidebar();
+                  }}
+                  onDelete={() =>
+                    handleDeleteChatroom(chatroom.id, chatroom.title)
+                  }
+                />
               ))
             )}
           </div>
         </div>
 
-        {/* User Info & Logout */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-medium">
-                  {user?.phone?.slice(-2) || "U"}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                  {user?.phone || "User"}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
-              aria-label="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
+        {/* ────── User Profile ────── */}
+        <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-800">
+          <UserProfile user={user} onLogout={handleLogout} />
         </div>
       </div>
 
-      {/* Mobile menu button */}
+      {/* ────── Mobile Menu Button ────── */}
       <button
         onClick={() => setIsMobileOpen(true)}
-        className="fixed top-4 left-4 z-30 lg:hidden p-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="fixed top-4 left-6 z-30 lg:hidden p-3 bg-white dark:bg-[#1e1e1e] border border-gray-300 dark:border-gray-700 rounded-xl shadow-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
         aria-label="Open sidebar"
       >
-        <Menu className="w-5 h-5" />
+        <Menu className="w-5 h-5 text-gray-800 dark:text-white" />
       </button>
 
-      {/* Create Chatroom Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Create New Chat
-            </h3>
-            <input
-              type="text"
-              placeholder="Enter chat name..."
-              value={newChatroomTitle}
-              onChange={(e) => setNewChatroomTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleCreateChatroom();
-                } else if (e.key === "Escape") {
-                  setShowCreateModal(false);
-                }
-              }}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 mb-4"
-              autoFocus
-              aria-label="Chat name"
-            />
-            <div className="flex space-x-3">
-              <button
-                onClick={handleCreateChatroom}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Create
-              </button>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="flex-1 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                Cancel
-              </button>
-            </div>
+      {/* ────── Create Chat Modal ────── */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Create New Chat"
+      >
+        <div className="space-y-4">
+          <SearchInput
+            value={newChatroomTitle}
+            onChange={setNewChatroomTitle}
+            placeholder="Enter chat name..."
+          />
+          <div className="flex space-x-3">
+            <Button
+              variant="primary"
+              onClick={handleCreateChatroom}
+              className="flex-1"
+            >
+              Create
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setShowCreateModal(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
 
-      {/* Delete Confirmation Modal */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Delete Chat
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to delete "{deleteConfirm.title}"? This
-              action cannot be undone.
-            </p>
-            <div className="flex space-x-3">
-              <button
-                onClick={confirmDelete}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="flex-1 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                Cancel
-              </button>
-            </div>
+      {/* ────── Delete Confirmation Modal ────── */}
+      <Modal
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        title="Delete Chat"
+      >
+        <div className="space-y-6">
+          <p className="text-gray-600 dark:text-gray-300">
+            Are you sure you want to delete{" "}
+            <span className="font-semibold text-gray-900 dark:text-white">
+              “{deleteConfirm?.title}”
+            </span>
+            ? This action cannot be undone.
+          </p>
+          <div className="flex space-x-3">
+            <Button variant="danger" onClick={confirmDelete} className="flex-1">
+              Delete
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setDeleteConfirm(null)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
     </>
   );
 };
 
-export default AppSidebar;
+export default NavigationSidebar;

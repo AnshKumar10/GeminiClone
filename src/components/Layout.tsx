@@ -20,7 +20,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div
       className={`min-h-screen transition-colors duration-200 ${
-        isDarkMode ? "dark bg-gray-900" : "bg-gray-50"
+        isDarkMode ? "dark:bg-[#1e1e1e]" : "bg-gray-50"
       }`}
     >
       {children}
