@@ -7,8 +7,8 @@ import { toast } from "sonner";
 import { Button } from "../Button";
 import { SearchInput } from "./SearchInput";
 import { EmptyState } from "../EmptyState";
-import { UserProfile } from "../UserProfile";
-import { Modal } from "../Modal";
+import { UserProfile } from "./UserProfile";
+import { Modal } from "./Modal";
 
 interface ChatroomItemProps {
   chatroom: {

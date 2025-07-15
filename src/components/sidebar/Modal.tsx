@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { IconButton } from "./ButtonWithIcon";
+import { IconButton } from "../ButtonWithIcon";
 
 interface PropsType {
   isOpen: boolean;

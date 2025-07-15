@@ -1,6 +1,6 @@
 import { LogOut } from "lucide-react";
-import { IconButton } from "./ButtonWithIcon";
-import type { User } from "../store/useStore";
+import type { User } from "../../store/useStore";
+import { IconButton } from "../ButtonWithIcon";
 
 export const UserProfile: React.FC<{ user: User; onLogout: () => void }> = ({
   user,
